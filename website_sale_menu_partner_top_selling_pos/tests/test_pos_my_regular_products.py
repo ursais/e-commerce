@@ -36,6 +36,10 @@ class TestPosMyRegularProducts(HttpCase):
                 "company_id": self.env.company.id,
                 "state": "paid",
                 "is_refund": is_refund,
+                "amount_tax": 0.0,
+                "amount_total": qty * self.product.list_price,
+                "amount_paid": qty * self.product.list_price,
+                "amount_return": 0.0,
                 "lines": [
                     Command.create(
                         {

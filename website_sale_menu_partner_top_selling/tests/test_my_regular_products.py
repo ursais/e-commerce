@@ -39,12 +39,9 @@ class TestMyRegularProducts(HttpCase):
         cls.products["Echo Product"].product_tmpl_id.website_published = False
 
     def _confirm_order(self, partner, lines, confirm=True, date_order=None):
-        vals = {"partner_id": partner.id}
-        if date_order:
-            vals["date_order"] = date_order
         order = self.env["sale.order"].create(
             {
-                **vals,
+                "partner_id": partner.id,
                 "order_line": [
                     Command.create(
                         {
@@ -59,6 +56,9 @@ class TestMyRegularProducts(HttpCase):
         )
         if confirm:
             order.action_confirm()
+        if date_order:
+            # action_confirm resets date_order to now.
+            order.date_order = date_order
         return order
 
     def _get_regular_products_page(self):
@@ -67,8 +67,9 @@ class TestMyRegularProducts(HttpCase):
 
     def test_page_lists_products_most_bought_first(self):
         """As a customer, I see the products I bought most on my regular
-        products page, and not the products bought by others, still in
-        quotation or not published on the shop."""
+        products page, and not the products bought by others or still in
+        quotation. Unpublished products are hidden from non-internal
+        users."""
         self._confirm_order(
             self.partner,
             [
@@ -93,8 +94,26 @@ class TestMyRegularProducts(HttpCase):
         self.assertIn("Alpha Product", html)
         self.assertIn("Bravo Product", html)
         self.assertLess(html.index("Alpha Product"), html.index("Bravo Product"))
-        for name in ("Charlie Product", "Delta Product", "Echo Product"):
+        for name in ("Charlie Product", "Delta Product"):
             self.assertNotIn(name, html)
+        # Internal users can preview unpublished products, like on the
+        # shop itself; check the published filter as a portal user.
+        portal_user = self.env["res.users"].create(
+            {
+                "name": "Portal User",
+                "login": "portal_user",
+                "group_ids": [Command.link(self.env.ref("base.group_portal").id)],
+            }
+        )
+        website = self.env["website"].search([], limit=1)
+        portal_env = self.env(user=portal_user)
+        templates = (
+            self.partner.with_env(portal_env)
+            .sudo()
+            ._get_my_regular_products(website.with_env(portal_env).sudo())
+        )
+        self.assertIn(self.products["Alpha Product"].product_tmpl_id, templates)
+        self.assertNotIn(self.products["Echo Product"].product_tmpl_id, templates)
 
     def test_page_is_limited_to_configured_number_of_products(self):
         """As a shop manager, I can limit how many regular products are
@@ -139,7 +158,12 @@ class TestMyRegularProducts(HttpCase):
     def test_menu_label_is_configurable(self):
         """As a shop manager, I can change the label of the link to my
         regular products in the shop."""
-        self.env.company.regular_products_menu_label = "Bought Before"
+        # The label is a translated field: set it in every installed
+        # language so the page renders it whatever the website language is.
+        for code, _name in self.env["res.lang"].get_installed():
+            self.env.company.with_context(
+                lang=code
+            ).regular_products_menu_label = "Bought Before"
 
         self.authenticate("admin", "admin")
         response = self.url_open("/shop")

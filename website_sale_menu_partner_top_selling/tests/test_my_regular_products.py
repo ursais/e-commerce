@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from odoo import Command, fields
 from odoo.tests.common import HttpCase, tagged
+
 from odoo.addons.base.tests.common import DISABLED_MAIL_CONTEXT
 
 _logger = logging.getLogger(__name__)
@@ -22,8 +23,13 @@ class TestMyRegularProducts(HttpCase):
         cls.partner = cls.env.ref("base.user_admin").partner_id
         cls.other_partner = cls.env["res.partner"].create({"name": "Other Customer"})
         cls.products = {}
-        for name in ("Bravo Product", "Alpha Product", "Charlie Product",
-                     "Delta Product", "Echo Product"):
+        for name in (
+            "Bravo Product",
+            "Alpha Product",
+            "Charlie Product",
+            "Delta Product",
+            "Echo Product",
+        ):
             product = cls.env["product.product"].create(
                 {"name": name, "list_price": 10.0}
             )
@@ -138,3 +144,25 @@ class TestMyRegularProducts(HttpCase):
         self.authenticate("admin", "admin")
         response = self.url_open("/shop")
         self.assertIn("Bought Before", response.text)
+
+    def test_portal_card_is_hidden_by_default(self):
+        """As a customer, I don't see a card for my regular products on my
+        portal home page until the shop manager enables it."""
+        portal_group = self.env.ref("base.group_portal")
+        portal_user = self.env["res.users"].create(
+            {
+                "name": "Portal User",
+                "login": "portal_user",
+                "password": "portal_user",
+                "group_ids": [Command.set(portal_group.ids)],
+            }
+        )
+        self.authenticate(portal_user.login, "portal_user")
+        response = self.url_open("/my")
+        self.assertNotIn("/shop/my_regular_products", response.text)
+
+        self.env["ir.config_parameter"].sudo().set_param(
+            "website_sale_menu_partner_top_selling.portal_card", "True"
+        )
+        response = self.url_open("/my")
+        self.assertIn("/shop/my_regular_products", response.text)

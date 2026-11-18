@@ -223,3 +223,55 @@ class TestMyRegularProducts(HttpCase):
         )
         response = self.url_open("/my")
         self.assertIn("/shop/my_regular_products", response.text)
+
+    def test_portal_card_position_is_configurable(self):
+        """As a shop manager, I can choose where the 'My Regular Products'
+        card is displayed on the customer portal home page."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "website_sale_menu_partner_top_selling.portal_card", "True"
+        )
+        portal_group = self.env.ref("base.group_portal")
+        portal_user = self.env["res.users"].create(
+            {
+                "name": "Portal User",
+                "login": "portal_user",
+                "password": "portal_user",
+                "group_ids": [Command.set(portal_group.ids)],
+            }
+        )
+        self.authenticate(portal_user.login, "portal_user")
+
+        def card_snippet(html):
+            index = html.index('href="/shop/my_regular_products"')
+            start = html.rfind("o_portal_index_card", 0, index)
+            return html[start:index]
+
+        # Top banner (default): a full-width card in the top section.
+        html = self.url_open("/my").text
+        self.assertIn("col-12", card_snippet(html))
+        self.assertLess(
+            html.index("/shop/my_regular_products"), html.index("/my/orders")
+        )
+
+        # Inline: a half-width card right before the Orders card.
+        self.env["ir.config_parameter"].sudo().set_param(
+            "website_sale_menu_partner_top_selling.portal_card_position",
+            "inline",
+        )
+        html = self.url_open("/my").text
+        self.assertIn("col-md-6", card_snippet(html))
+        self.assertLess(
+            html.index("/shop/my_regular_products"), html.index("/my/orders")
+        )
+
+        # Bottom banner: a full-width card after the common category.
+        self.env["ir.config_parameter"].sudo().set_param(
+            "website_sale_menu_partner_top_selling.portal_card_position",
+            "bottom",
+        )
+        html = self.url_open("/my").text
+        self.assertIn("col-12", card_snippet(html))
+        self.assertGreater(
+            html.index("/shop/my_regular_products"),
+            html.index('id="portal_common_category"'),
+        )

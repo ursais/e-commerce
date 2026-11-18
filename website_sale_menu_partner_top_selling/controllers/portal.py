@@ -42,7 +42,9 @@ class CustomerPortal(CustomerPortal):
             getattr(request, "website", None)
             or request.env["website"].get_current_website()
         )
-        values["my_regular_products_count"] = len(
-            request.env.user.partner_id._get_my_regular_products(website)
-        )
+        # The badge counts products a customer can actually buy again, so
+        # unpublished products are excluded even for internal users who can
+        # preview them on the page itself.
+        templates = request.env.user.partner_id._get_my_regular_products(website)
+        values["my_regular_products_count"] = len(templates.filtered("is_published"))
         return values

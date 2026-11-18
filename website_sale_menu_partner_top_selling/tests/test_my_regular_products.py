@@ -1,6 +1,7 @@
 # Copyright 2024 Tecnativa - Pilar Vargas
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 
+import json
 import logging
 from datetime import timedelta
 
@@ -115,6 +116,35 @@ class TestMyRegularProducts(HttpCase):
         self.assertIn(self.products["Alpha Product"].product_tmpl_id, templates)
         self.assertNotIn(self.products["Echo Product"].product_tmpl_id, templates)
 
+        # The portal card badge counts products a customer can buy again:
+        # unpublished products are excluded even for internal users.
+        self.env["ir.config_parameter"].sudo().set_param(
+            "website_sale_menu_partner_top_selling.portal_card", "True"
+        )
+        response = self.url_open(
+            "/my/counters",
+            data=json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "method": "call",
+                    "id": 1,
+                    "params": {"counters": ["my_regular_products_count"]},
+                }
+            ),
+            headers={"Content-Type": "application/json"},
+        )
+        expected = len(
+            self.partner._get_my_regular_products(website).filtered("is_published")
+        )
+        self.assertEqual(
+            response.json()["result"]["my_regular_products_count"], expected
+        )
+        # Echo Product is bought but not published: it must not be counted.
+        self.assertLess(
+            response.json()["result"]["my_regular_products_count"],
+            len(self.partner._get_my_regular_products(website)),
+        )
+
     def test_page_is_limited_to_configured_number_of_products(self):
         """As a shop manager, I can limit how many regular products are
         displayed on the page."""
@@ -172,6 +202,9 @@ class TestMyRegularProducts(HttpCase):
     def test_portal_card_is_hidden_by_default(self):
         """As a customer, I don't see a card for my regular products on my
         portal home page until the shop manager enables it."""
+        self.env["ir.config_parameter"].sudo().set_param(
+            "website_sale_menu_partner_top_selling.portal_card", "False"
+        )
         portal_group = self.env.ref("base.group_portal")
         portal_user = self.env["res.users"].create(
             {

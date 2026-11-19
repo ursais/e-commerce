@@ -223,6 +223,12 @@ class TestMyRegularProducts(HttpCase):
         )
         response = self.url_open("/my")
         self.assertIn("/shop/my_regular_products", response.text)
+        self.assertIn("Products you bought before, to buy again", response.text)
+
+        # The card description is configurable per company.
+        self.env.company.regular_products_card_text = "Buy them again"
+        response = self.url_open("/my")
+        self.assertIn("Buy them again", response.text)
 
     def test_portal_card_position_is_configurable(self):
         """As a shop manager, I can choose where the 'My Regular Products'

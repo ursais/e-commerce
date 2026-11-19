@@ -30,6 +30,13 @@
                         <field name="regular_products_menu_label" />
                     </setting>
                     <setting
+                        id="regular_products_card_text"
+                        string="Regular Products Card Text"
+                        help="Description of the 'My Regular Products' card on the customer portal. It can be translated."
+                    >
+                        <field name="regular_products_card_text" />
+                    </setting>
+                    <setting
                         id="regular_products_portal_card"
                         string="Customer Portal Card"
                         help="Show a 'My Regular Products' card on the customer portal home page."

@@ -13,3 +13,8 @@ class ResCompany(models.Model):
         help="Label of the 'My Regular Products' link in the shop categories "
         "and of the card on the customer portal.",
     )
+    regular_products_card_text = fields.Char(
+        default="Products you bought before, to buy again",
+        translate=True,
+        help="Description of the 'My Regular Products' card on the customer portal.",
+    )

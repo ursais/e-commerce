@@ -21,6 +21,11 @@ class ResConfigSettings(models.TransientModel):
         related="website_id.company_id.regular_products_menu_label",
         readonly=False,
     )
+    regular_products_card_text = fields.Char(
+        string="Regular Products Card Text",
+        related="website_id.company_id.regular_products_card_text",
+        readonly=False,
+    )
     regular_products_portal_card = fields.Boolean(
         string="Customer Portal Card",
         default=False,

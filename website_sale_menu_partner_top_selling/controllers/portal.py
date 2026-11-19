@@ -24,6 +24,9 @@ class CustomerPortal(CustomerPortal):
             values["my_regular_products_label"] = (
                 website._get_my_regular_products_menu_label()
             )
+            values["my_regular_products_card_text"] = (
+                website._get_my_regular_products_card_text()
+            )
             values["my_regular_products_card_position"] = (
                 request.env["ir.config_parameter"]
                 .sudo()

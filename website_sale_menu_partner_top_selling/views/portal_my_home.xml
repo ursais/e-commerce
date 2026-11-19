@@ -9,7 +9,7 @@
             />
             <t t-set="title" t-value="my_regular_products_label" />
             <t t-set="url" t-value="'/shop/my_regular_products'" />
-            <t t-set="text">Products you bought before, to buy again</t>
+            <t t-set="text" t-value="my_regular_products_card_text" />
             <t t-set="placeholder_count" t-value="'my_regular_products_count'" />
         </t>
     </template>

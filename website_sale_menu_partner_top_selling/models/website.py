@@ -12,3 +12,9 @@ class Website(models.Model):
         return self.company_id.regular_products_menu_label or self.env._(
             "My Regular Products"
         )
+
+    def _get_my_regular_products_card_text(self):
+        self.ensure_one()
+        return self.company_id.regular_products_card_text or self.env._(
+            "Products you bought before, to buy again"
+        )

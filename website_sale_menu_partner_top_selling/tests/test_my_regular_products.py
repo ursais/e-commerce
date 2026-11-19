@@ -137,9 +137,12 @@ class TestMyRegularProducts(HttpCase):
             response.json()["result"]["my_regular_products_count"], expected
         )
         # Echo Product is bought but not published: it must not be counted.
+        # Browse the website as an internal user so unpublished products are
+        # included in the total, like they are for the shop itself.
+        admin_website = self.env["website"].search([], limit=1)
         self.assertLess(
             response.json()["result"]["my_regular_products_count"],
-            len(self.partner._get_my_regular_products(website)),
+            len(self.partner._get_my_regular_products(admin_website)),
         )
 
     def test_page_is_limited_to_configured_number_of_products(self):

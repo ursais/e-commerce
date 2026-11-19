@@ -62,6 +62,9 @@ The *Regular Products Menu Label* setting changes the label of the link
 to the page in the shop and of the card on the customer portal. It is
 translatable.
 
+The *Regular Products Card Text* setting changes the description shown
+under the card title on the customer portal. It is translatable.
+
 The *Customer Portal Card* setting shows a card linking to the page on
 the customer portal home page. It is disabled by default.
 
